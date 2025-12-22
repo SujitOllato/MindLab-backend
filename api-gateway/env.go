@@ -1,0 +1,9 @@
+PORT=8080
+JWT_SECRET=ollato_midlab_secret
+
+AUTH_SERVICE=http://localhost:3001
+ASSESSMENT_SERVICE=http://localhost:3002
+SCORING_SERVICE=http://localhost:3003
+REPORT_SERVICE=http://localhost:3004
+RECOMMENDATION_SERVICE=http://localhost:3005
+PAYMENT_SERVICE=http://localhost:3006
