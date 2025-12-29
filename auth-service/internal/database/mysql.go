@@ -1,11 +1,19 @@
 package database
+
 import (
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-	"auth-service/internal/config"
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-func connect(dsn string) (*gorm.DB, error) {
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+var DB *sql.DB
 
+func Connect(dbURL string) error {
+	db, err := sql.Open("mysql", dbURL)
+	if err != nil {
+		return err
+	}
+
+	DB = db
+	return DB.Ping()
 }

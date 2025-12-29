@@ -1,16 +1,17 @@
-package config 
+package config
+
 import "os"
 
 type Config struct {
-	DBUrl      string
+	DBUrl          string
 	GoogleClientID string
-	JWTSecret  string
+	JWTSecret      string
 }
 
-func Load() *Config{
+func Load() *Config {
 	return &Config{
-		DBUrl:      os.Getenv("DB_URL"),
+		DBUrl:          os.Getenv("DB_URL"),
 		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
-		JWTSecret:  os.Getenv("JWT_SECRET"),
+		JWTSecret:      os.Getenv("JWT_SECRET"),
 	}
 }

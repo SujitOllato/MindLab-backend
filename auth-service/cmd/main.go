@@ -1,18 +1,30 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin"
-    "auth-service/internal/config"
-    "auth-service/internal/database"
-    "auth-service/internal/routes"
+	"log"
+
+	"auth-service/internal/config"
+	"auth-service/internal/database"
+	"auth-service/internal/routes"
+	"auth-service/internal/services"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-    cfg := config.Load()
-    db, _ := database.Connect(cfg.DBUrl)
+	_ = godotenv.Load()
 
-    r := gin.Default()
-    routes.RegisterRoutes(r)
+	cfg := config.Load()
 
-    r.Run(":3000")
+	if err := database.Connect(cfg.DBUrl); err != nil {
+		log.Fatal("Database connection failed:", err)
+	}
+
+	services.Init(cfg)
+
+	r := gin.Default()
+	routes.RegisterRoutes(r)
+
+	r.Run(":8081")
 }

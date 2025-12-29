@@ -1,36 +1,49 @@
 package handlers
 
 import (
-    "net/http"
+	"context"
+	"net/http"
 
-    "github.com/gin-gonic/gin"
-    "auth-service/internal/services"
+	"auth-service/internal/services"
+
+	"github.com/gin-gonic/gin"
+	"google.golang.org/api/idtoken"
 )
 
+type GoogleAuthRequest struct {
+	IDToken string `json:"id_token"`
+}
+
 func GoogleLogin(c *gin.Context) {
-    var body struct {
-        IDToken string `json:"id_token"`
-    }
-    if err := c.ShouldBindJSON(&body); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-        return
-    }
+	var req GoogleAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
 
-    payload, err := services.VerifyGoogleToken(
-        body.IDToken,
-        services.GoogleClientID,
-    )
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-        return
-    }
+	payload, err := idtoken.Validate(context.Background(), req.IDToken, services.GoogleClientID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Google token"})
+		return
+	}
 
-    // find or create user (DB logic omitted for brevity)
+	email := payload.Claims["email"].(string)
+	name := payload.Claims["name"].(string)
+	googleID := payload.Subject
 
-    token := services.GenerateJWT(user)
+	userID, err := services.FindOrCreateGoogleUser(email, name, googleID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User creation failed"})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "token": token,
-        "user":  user,
-    })
+	token, err := services.GenerateJWT(userID, email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+	})
 }

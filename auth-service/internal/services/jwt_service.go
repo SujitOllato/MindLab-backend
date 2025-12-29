@@ -1,11 +1,15 @@
 package services
 
 import (
+    "os"
     "time"
+
     "github.com/golang-jwt/jwt/v5"
 )
 
 func GenerateJWT(userID uint64, uuid string) (string, error) {
+    jwtSecret := os.Getenv("JWT_SECRET")
+
     claims := jwt.MapClaims{
         "user_id": userID,
         "uuid":    uuid,
@@ -13,5 +17,5 @@ func GenerateJWT(userID uint64, uuid string) (string, error) {
     }
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(JWTSecret))
+    return token.SignedString([]byte(jwtSecret))
 }
