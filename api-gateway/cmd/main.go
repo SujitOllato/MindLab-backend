@@ -5,24 +5,23 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-
 	"api-gateway/internal/router"
 )
 
 func main() {
-	_ = godotenv.Load()
+	r := gin.Default()
 
+	// Setup all routes
+	router.SetupRoutes(r)
+
+	// Get port from env or default
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	r := gin.New()
-	r.Use(gin.Recovery())
-
-	router.SetupRoutes(r)
-
-	log.Println("🚀 API Gateway running on port", port)
-	r.Run(":" + port)
+	log.Printf("API Gateway running on port %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
