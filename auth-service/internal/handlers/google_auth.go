@@ -10,40 +10,40 @@ import (
 	"google.golang.org/api/idtoken"
 )
 
-type GoogleAuthRequest struct {
+type GoogleLoginRequest struct {
 	IDToken string `json:"id_token"`
 }
 
 func GoogleLogin(c *gin.Context) {
-	var req GoogleAuthRequest
+	var req GoogleLoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	payload, err := idtoken.Validate(context.Background(), req.IDToken, services.GoogleClientID)
+	payload, err := idtoken.Validate(
+		context.Background(),
+		req.IDToken,
+		services.GetGoogleClientID(),
+	)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Google token"})
 		return
 	}
 
-	email := payload.Claims["email"].(string)
-	name := payload.Claims["name"].(string)
-	googleID := payload.Subject
-
-	userID, err := services.FindOrCreateGoogleUser(email, name, googleID)
+	user, err := services.FindOrCreateGoogleUser(
+		payload.Claims["email"].(string),
+		payload.Claims["name"].(string),
+	)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User creation failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := services.GenerateJWT(userID, email)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
-		return
-	}
+	token, _ := services.GenerateJWT(user.ID, user.Email)
 
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
+		"user":  user,
 	})
 }

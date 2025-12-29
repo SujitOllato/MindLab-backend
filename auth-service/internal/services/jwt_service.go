@@ -1,21 +1,18 @@
 package services
 
 import (
-    "os"
-    "time"
+	"time"
 
-    "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateJWT(userID uint64, uuid string) (string, error) {
-    jwtSecret := os.Getenv("JWT_SECRET")
+func GenerateJWT(userID uint64, email string) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"email":   email,
+		"exp":     time.Now().Add(72 * time.Hour).Unix(),
+	}
 
-    claims := jwt.MapClaims{
-        "user_id": userID,
-        "uuid":    uuid,
-        "exp":     time.Now().Add(7 * 24 * time.Hour).Unix(),
-    }
-
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(jwtSecret))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(jwtSecret))
 }
